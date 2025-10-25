@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MSC-MSIT Chatbot</title>
+    <style>
+        :root {
+            --mslearn-blue: #1c80cd;
+            --mslearn-navy: #1d4367;
+            --mslearn-light-blue: #50E6FF;
+            --color-bg-1: rgba(0, 120, 212, 0.08);
+            --color-bg-2: rgba(27, 58, 87, 0.08);
+            --color-bg-3: rgba(80, 230, 255, 0.08);
+            --color-primary: var(--mslearn-blue);
+            --color-primary-dark: var(--mslearn-navy);
+            --color-accent: var(--mslearn-light-blue);
+            --color-cream-50: #F5F9FC;
+            --color-cream-100: #FFFFFF;
+            --color-slate-900: #1B3A57;
+            --color-slate-500: #6B7C8C;
+            --color-gray-400-rgb: 107, 124, 140;
+            --font-family-base: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background: var(--color-charcoal-700);
+                --color-surface: var(--color-charcoal-800);
+                --color-text: var(--color-gray-200);
+                --color-text-secondary: var(--color-gray-300);
+                --color-border: rgba(var(--color-gray-400-rgb), 0.3);
+                --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --color-background: var(--color-cream-50);
+                --color-surface: var(--color-cream-100);
+                --color-text: var(--color-slate-900);
+                --color-text-secondary: var(--color-slate-500);
+                --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+                --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            background: var(--color-background);
+            color: var(--color-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: var(--color-surface);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--color-border);
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--mslearn-blue), var(--mslearn-navy));
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chat-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: linear-gradient(45deg, transparent 45%, rgba(80, 230, 255, 0.1) 100%);
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chat-header p {
+            font-size: 14px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .message.bot .message-avatar {
+            background: var(--color-bg-1);
+            color: var(--mslearn-blue);
+            border: 2px solid var(--mslearn-light-blue);
+        }
+
+        .message.user .message-avatar {
+            background: var(--color-bg-3);
+            color: var(--color-text);
+            border: 2px solid var(--mslearn-blue);
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .message.bot .message-content {
+            background: var(--color-secondary);
+            border-radius: 12px 12px 12px 4px;
+            border: 1px solid rgba(0, 120, 212, 0.1);
+        }
+
+        .message.user .message-content {
+            background: var(--mslearn-blue);
+            color: white;
+            border-radius: 12px 12px 4px 12px;
+        }
+
+        .message-content a {
+            color: inherit;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .quick-reply-btn {
+            padding: 8px 14px;
+            background: var(--color-bg-2);
+            border: 2px solid var(--mslearn-blue);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--mslearn-blue);
+            font-weight: 600;
+        }
+
+        .quick-reply-btn:hover {
+            background: var(--mslearn-blue);
+            color: white;
+            border-color: var(--mslearn-blue);
+            box-shadow: 0 2px 8px rgba(0, 120, 212, 0.2);
+        }
+
+        .input-area {
+            padding: 16px;
+            background: var(--color-surface);
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--color-border);
+            border-radius: 24px;
+            font-size: 15px;
+            background: var(--color-background);
+            color: var(--color-text);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-area input:focus {
+            border-color: var(--mslearn-blue);
+            box-shadow: 0 0 0 4px rgba(0, 120, 212, 0.1);
+        }
+
+        .input-area button {
+            padding: 12px 24px;
+            background: var(--mslearn-blue);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0, 120, 212, 0.2);
+        }
+
+        .input-area button:hover {
+            background: var(--mslearn-navy);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+        }
+
+        .input-area button:active {
+            transform: scale(0.98);
+        }
+
+        .typing-indicator {
+            display: none;
+            gap: 4px;
+            padding: 12px 16px;
+            background: var(--color-secondary);
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-text-secondary);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 3px;
+        }
+
+        @media (max-width: 640px) {
+            .message-content {
+                max-width: 85%;
+            }
+            
+            .chat-header h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="msc_data\MSCMSIT-removebg-preview.png" alt="MSC-MSIT Logo" style="width:70px; height:auto; position:absolute; left:16px; top:13px;">
+            <h1> MSC-MSIT Assistant</h1>
+            <p>Your Microsoft Student Chapter companion</p>
+        </div>
+
+        <div class="messages" id="messages">
+            <div class="message bot">
+                <div class="message-avatar">🦁</div>
+                <div>
+                    <div class="message-content">
+                        Hey there! 👋 I'm your MSCMSIT bot! Ask me about events, departments, recruitment, or how to join our tech community! 💻🚀
+                    </div>
+                    <div class="quick-replies">
+                        <button class="quick-reply-btn" onclick="sendQuickReply('What events do you organize?')">📅 Events</button>
+                        <button class="quick-reply-btn" onclick="sendQuickReply('How can I join?')">🚪 Join Us</button>
+                        <button class="quick-reply-btn" onclick="sendQuickReply('Tell me about departments')">👥 Departments</button>
+                        <button class="quick-reply-btn" onclick="sendQuickReply('What is MSCMSIT?')">ℹ️ About</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Ask me anything about MSCMSIT..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const mscData = {
+            "name": "MSCMSIT_Agent",
+            "description": "An AI agent representing the Microsoft Student Chapter at MSIT (MSCMSIT), a Delhi-based tech hub founded in 2023. Focused on fostering innovation through hands-on workshops, hackathons, and community building in areas like AI, Web3, blockchain, DSA, and coding.",
+            "mission_statement": "To create a hub of tech brilliance where students collaborate on emerging technologies like AI, Web3, and blockchain, making tech accessible through workshops, hackathons, and mentorship. We debug together, one line of code at a time.",
+            "personality": ["energetic", "collaborative", "tech-savvy", "inclusive", "motivational"],
+            "departments": ["Web Dev", "Social Media/PR", "EVM/DSA", "Design", "Content", "AI/ML"],
+            "partners": ["HackQuest", "EDU Chain", "Open Campus", "Flow Blockchain", "Coding Ninjas", "Microsoft Azure"],
+            "recruitment_details": {
+                "form_link": "https://docs.google.com/forms/d/e/1FAIpQLSewFrz23Y-w2O1sYCz6MleyqBhtICigadY_332DldwtLQUc9A/viewform?usp=send_form",
+                "deadline": "September 30, 2025",
+                "notes": "Open to passionate students across years and branches; no restrictions. Focus on skills and proof of work."
+            },
+            "social_links": {
+                "X": "https://x.com/mscmsit",
+                "LinkedIn": "https://www.linkedin.com/company/mscmsit",
+                "Instagram": "https://www.instagram.com/mscmsit",
+                "Website": "https://mscmsit.netlify.app/"
+            },
+            "focus_tracks": ["AI", "DeFi", "DeSci", "Web3 Gaming", "Smart Contracts", "Version Control"],
+            "past_events": [
+                {"name": "MSC X EDU Chain Regional Hackathon", "date": "March 2025", "details": "$1,000 prize pool, 175 participants 🏆"},
+                {"name": "MSC X Flow & HackQuest", "date": "Oct 2025", "details": "Delhi Unitour with 100+ builders 🚀"},
+                {"name": "Git and Github session", "date": "Sept 2025", "details": "Hands-on Git & GitHub workshop 💻"},
+                {"name": "Engineering Her", "date": "Oct 2025", "details": "Women in tech empowerment event 👩‍💻"},
+                {"name": "Open Source session", "date": "Oct 2024", "details": "C4GT collaboration 🌐"}
+            ]
+        };
+
+        function getBotResponse(query) {
+            const q = query.toLowerCase();
+
+            // Greetings
+            if (q.match(/^(hi|hello|hey|hola|namaste)/)) {
+                return "Hey there! 👋 I'm your MSCMSIT assistant! How can I help you today? Ask me about events, departments, or how to join! 🚀";
+            }
+
+            // About MSCMSIT
+            if (q.includes('what is') || q.includes('about msc') || q.includes('tell me about')) {
+                return `${mscData.description} 💻\n\nOur mission: ${mscData.mission_statement} 🚀\n\nVisit us: ${mscData.social_links.Website}`;
+            }
+
+            // Mission
+            if (q.includes('mission') || q.includes('goal') || q.includes('purpose')) {
+                return `Our mission: ${mscData.mission_statement} 🎯\n\nWe focus on: ${mscData.focus_tracks.join(', ')} 💡`;
+            }
+
+            // Events - General
+            if (q.includes('event') || q.includes('workshop') || q.includes('hackathon')) {
+                if (q.includes('upcoming') || q.includes('next') || q.includes('future')) {
+                    return `Stay tuned for upcoming events! 📅\n\nFollow us for updates:\n🐦 X: ${mscData.social_links.X}\n💼 LinkedIn: ${mscData.social_links.LinkedIn}\n📸 Instagram: ${mscData.social_links.Instagram}`;
+                }
+                
+                const recentEvents = mscData.past_events.slice(0, 3).map(e => `• ${e.name} (${e.date}) - ${e.details}`).join('\n');
+                return `Recent highlights! 🎉\n\n${recentEvents}\n\nCheck out more on our website: ${mscData.social_links.Website} 🚀`;
+            }
+
+            // Past events specific
+            if (q.includes('past event') || q.includes('previous event') || q.includes('last event')) {
+                const events = mscData.past_events.slice(0, 5).map(e => `• ${e.name} (${e.date})`).join('\n');
+                return `Our recent events! 🎊\n\n${events}\n\nWe've organized 26+ events since 2023! 💪`;
+            }
+
+            // Hackathons
+            if (q.includes('hackathon')) {
+                return `We organize amazing hackathons! 🏆\n\nOur biggest: MSC X EDU Chain Regional Hackathon with $1,000 prize pool and 175 participants! 🚀\n\nTracks: AI, DeFi, DeSci, Web3 Gaming\n\nStay tuned for our next one! Follow us: ${mscData.social_links.Instagram}`;
+            }
+
+            // Departments / Teams
+            if (q.includes('department') || q.includes('team') || q.includes('division')) {
+                return `We have amazing departments! 👥\n\n${mscData.departments.map(d => `• ${d}`).join('\n')}\n\nInterested? Apply here: ${mscData.recruitment_details.form_link} 🚀`;
+            }
+
+            // Join / Recruitment
+            if (q.includes('join') || q.includes('recruit') || q.includes('apply') || q.includes('how to be part')) {
+                return "Sorry! to inform you that the recruitment for this year has ended. But don't worry! You can prepare for next year by following us on social media and staying updated on our events and workshops! 🚀";
+            }
+
+            // Partners / Collaborations
+            if (q.includes('partner') || q.includes('collaborate') || q.includes('sponsor')) {
+                return `Our amazing partners! 🤝\n\n${mscData.partners.map(p => `• ${p}`).join('\n')}\n\nInterested in partnering? Reach out on LinkedIn: ${mscData.social_links.LinkedIn} 💼`;
+            }
+
+            // Social Media / Contact
+            if (q.includes('contact') || q.includes('social') || q.includes('follow') || q.includes('instagram') || q.includes('twitter') || q.includes('linkedin')) {
+                return `Connect with us! 🌐\n\n🐦 X: ${mscData.social_links.X}\n💼 LinkedIn: ${mscData.social_links.LinkedIn}\n📸 Instagram: ${mscData.social_links.Instagram}\n🌍 Website: ${mscData.social_links.Website}\n\nSee you there! 👋`;
+            }
+
+            // Focus areas / Tracks
+            if (q.includes('focus') || q.includes('track') || q.includes('area') || q.includes('web3') || q.includes('ai') || q.includes('blockchain')) {
+                return `We focus on cutting-edge tech! 💡\n\nOur tracks:\n${mscData.focus_tracks.map(t => `• ${t}`).join('\n')}\n\nJoin us to learn and build! 🚀`;
+            }
+
+            // Git/GitHub
+            if (q.includes('git') || q.includes('github') || q.includes('version control')) {
+                return `We conduct hands-on Git & GitHub sessions! 💻\n\nRecent workshop: Sept 2025 - Foundations of version control 🌿\n\nStay tuned for more workshops: ${mscData.social_links.Website} 🚀`;
+            }
+
+            // Women in tech
+            if (q.includes('women') || q.includes('girl') || q.includes('female') || q.includes('engineering her')) {
+                return `We support women in tech! 👩‍💻\n\nOur "Engineering Her" event empowers female developers! 💪\n\nInclusive, collaborative, and motivational - that's us! 🌟`;
+            }
+
+            // Delhi / Location
+            if (q.includes('where') || q.includes('location') || q.includes('delhi') || q.includes('msit')) {
+                return `We're based in Delhi at MSIT! 📍\n\nMaharaja Surajmal Institute of Technology, a hub for tech innovation since 2023! 🏛️\n\nVisit: ${mscData.social_links.Website}`;
+            }
+
+            // Benefits / Why join
+            if (q.includes('benefit') || q.includes('why join') || q.includes('what do i get')) {
+                return `Why join MSCMSIT? 🤔\n\n✅ Hands-on workshops & hackathons\n✅ Industry exposure with top partners\n✅ Network with 100+ tech enthusiasts\n✅ Build real projects in AI, Web3, blockchain\n✅ Win prizes & swag! 🏆\n\nReady? Apply: ${mscData.recruitment_details.form_link} 🚀`;
+            }
+
+            // Thanks
+            if (q.includes('thank') || q.includes('thanks') || q.includes('awesome')) {
+                return `You're welcome! 😊 Happy to help! If you have more questions, just ask! We debug together! 💻🚀`;
+            }
+
+            // Bye
+            if (q.includes('bye') || q.includes('goodbye') || q.includes('see you')) {
+                return `See you soon! 👋 Don't forget to follow us and join our community! Keep coding! 💻🚀`;
+            }
+
+            // Default fallback
+            return `Hmm, I'm not sure about that! 🤔\n\nBut I can help you with:\n• Events & Hackathons 🎉\n• Departments & Teams 👥\n• How to Join 🚪\n• Our Partners 🤝\n• Social Media Links 🌐\n\nWhat would you like to know? 💡`;
+        }
+
+        function addMessage(text, isUser) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = isUser ? '👤' : '🦁';
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            content.innerHTML = text.replace(/\n/g, '<br>');
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTyping() {
+            const messagesDiv = document.getElementById('messages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.id = 'typing-indicator';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = '🦁';
+            
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator active';
+            typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+            
+            typingDiv.appendChild(avatar);
+            typingDiv.appendChild(typing);
+            messagesDiv.appendChild(typingDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            addMessage(message, true);
+            input.value = '';
+            
+            showTyping();
+            
+            setTimeout(() => {
+                hideTyping();
+                const response = getBotResponse(message);
+                addMessage(response, false);
+            }, 800);
+        }
+
+        function sendQuickReply(text) {
+            document.getElementById('userInput').value = text;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
